@@ -14,10 +14,7 @@ import {
   Shield, 
   ArrowRight, 
   User, 
-  Phone,
-  MapPin,
-  Wrench,
-  FileText
+  Phone
 } from "lucide-react";
 import Link from "next/link";
 
@@ -29,27 +26,8 @@ export default function SignUpPage() {
     confirmPassword: "",
     name: "",
     phone: "",
-    role: "user" as "user" | "mechanic" | "admin",
-  });
-
-  const [mechanicData, setMechanicData] = useState({
-    licenseNumber: "",
-    specialties: [] as string[],
-    hourlyRate: "",
-    location: {
-      address: "",
-      city: "",
-      state: "",
-      latitude: 0,
-      longitude: 0,
-    },
-    vehicle: {
-      type: "",
-      make: "",
-      model: "",
-      year: "",
-      licensePlate: "",
-    },
+    role: "user" as "user" | "admin",
+    shopName: "", // For admin registration
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -59,47 +37,12 @@ export default function SignUpPage() {
 
   const router = useRouter();
 
-  const specialtyOptions = [
-    "battery", "tires", "towing", "lockout", "engine", "brakes", "electrical"
-  ];
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
     setError("");
-  };
-
-  const handleMechanicChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setMechanicData({
-        ...mechanicData,
-        [parent]: {
-          ...mechanicData[parent as keyof typeof mechanicData],
-          [child]: value,
-        },
-      });
-    } else {
-      setMechanicData({
-        ...mechanicData,
-        [name]: value,
-      });
-    }
-  };
-
-  const handleSpecialtyChange = (specialty: string) => {
-    const updatedSpecialties = mechanicData.specialties.includes(specialty)
-      ? mechanicData.specialties.filter(s => s !== specialty)
-      : [...mechanicData.specialties, specialty];
-    
-    setMechanicData({
-      ...mechanicData,
-      specialties: updatedSpecialties,
-    });
   };
 
   const validateStep1 = () => {
@@ -122,9 +65,9 @@ export default function SignUpPage() {
   };
 
   const validateStep2 = () => {
-    if (formData.role === "mechanic") {
-      if (!mechanicData.licenseNumber || !mechanicData.hourlyRate || mechanicData.specialties.length === 0) {
-        setError("Please fill in all mechanic details");
+    if (formData.role === "admin") {
+      if (!formData.shopName || !formData.shopName.trim()) {
+        setError("Please enter your shop name");
         return false;
       }
     }
@@ -149,7 +92,6 @@ export default function SignUpPage() {
     try {
       const requestData = {
         ...formData,
-        ...(formData.role === "mechanic" && { mechanicData }),
       };
 
       const response = await fetch("/api/auth/register", {
@@ -190,15 +132,15 @@ export default function SignUpPage() {
           className="text-center mb-8"
         >
           <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Shield className="w-7 h-7 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Shield className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               RoadGuard
             </span>
           </Link>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join RoadGuard today</p>
+          <p className="text-gray-600">Join RoadGuard for reliable roadside assistance</p>
         </motion.div>
 
         {/* Progress Indicator */}
@@ -237,8 +179,8 @@ export default function SignUpPage() {
                     {/* Role Selection */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700">Account Type</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {["user", "mechanic", "admin"].map((role) => (
+                      <div className="grid grid-cols-2 gap-2">
+                        {["user", "admin"].map((role) => (
                           <button
                             key={role}
                             type="button"
@@ -249,9 +191,21 @@ export default function SignUpPage() {
                                 : 'border-gray-300 hover:border-gray-400'
                             }`}
                           >
-                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                            <div className="flex items-center justify-center space-x-2">
+                              {role === "user" && <User className="w-4 h-4" />}
+                              {role === "admin" && <Shield className="w-4 h-4" />}
+                              <span className="capitalize">{role}</span>
+                            </div>
                           </button>
                         ))}
+                      </div>
+                      {formData.role === "admin" && (
+                        <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                          🏪 Admin accounts are for shop owners who want to manage their own roadside assistance business
+                        </p>
+                      )}
+                      <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                        <strong>Note:</strong> Mechanic accounts are created by shop owners. If you're a mechanic, please contact your shop owner to create your account.
                       </div>
                     </div>
 
@@ -355,104 +309,34 @@ export default function SignUpPage() {
                   </>
                 )}
 
-                {step === 2 && formData.role === "mechanic" && (
+                {step === 2 && formData.role === "admin" && (
                   <>
-                    {/* License Number */}
+                    {/* Shop Name for Admin */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">License Number</label>
+                      <label className="text-sm font-medium text-gray-700">Shop Name</label>
                       <div className="relative">
-                        <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                           type="text"
-                          name="licenseNumber"
-                          value={mechanicData.licenseNumber}
-                          onChange={handleMechanicChange}
+                          name="shopName"
+                          value={formData.shopName}
+                          onChange={handleChange}
                           required
                           className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                          placeholder="Your mechanic license number"
+                          placeholder="Enter your shop name"
                         />
                       </div>
-                    </div>
-
-                    {/* Specialties */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Specialties</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {specialtyOptions.map((specialty) => (
-                          <button
-                            key={specialty}
-                            type="button"
-                            onClick={() => handleSpecialtyChange(specialty)}
-                            className={`p-2 rounded-lg border text-sm transition-all ${
-                              mechanicData.specialties.includes(specialty)
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-300 hover:border-gray-400'
-                            }`}
-                          >
-                            {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Hourly Rate */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Hourly Rate ($)</label>
-                      <input
-                        type="number"
-                        name="hourlyRate"
-                        value={mechanicData.hourlyRate}
-                        onChange={handleMechanicChange}
-                        required
-                        min="10"
-                        max="500"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        placeholder="Your hourly rate"
-                      />
-                    </div>
-
-                    {/* Location */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Service Location</label>
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          name="location.address"
-                          value={mechanicData.location.address}
-                          onChange={handleMechanicChange}
-                          required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                          placeholder="Street address"
-                        />
-                        <div className="grid grid-cols-2 gap-3">
-                          <input
-                            type="text"
-                            name="location.city"
-                            value={mechanicData.location.city}
-                            onChange={handleMechanicChange}
-                            required
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                            placeholder="City"
-                          />
-                          <input
-                            type="text"
-                            name="location.state"
-                            value={mechanicData.location.state}
-                            onChange={handleMechanicChange}
-                            required
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                            placeholder="State"
-                          />
-                        </div>
-                      </div>
+                      <p className="text-xs text-gray-500">
+                        This will be the name of your roadside assistance business
+                      </p>
                     </div>
                   </>
                 )}
 
-                {step === 2 && formData.role !== "mechanic" && (
+                {step === 2 && formData.role === "user" && (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Shield className="w-8 h-8 text-green-600" />
+                      <User className="w-8 h-8 text-green-600" />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">Almost Done!</h3>
                     <p className="text-gray-600">Click "Create Account" to complete your registration.</p>

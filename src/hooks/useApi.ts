@@ -33,11 +33,21 @@ export function useApi<T>(endpoint: string, options: UseApiOptions = {}) {
         credentials: 'include',
       });
 
+      console.log(`API Request: ${endpoint} - Status: ${response.status}`);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API Error for ${endpoint}:`, errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log(`API Response for ${endpoint}:`, {
+        status: response.status,
+        hasData: !!result,
+        dataKeys: result ? Object.keys(result) : [],
+        isEmpty: result && Array.isArray(result.employees) ? result.employees.length === 0 : 'not array'
+      });
       setData(result);
     } catch (err: any) {
       setError(err.message || 'An error occurred');

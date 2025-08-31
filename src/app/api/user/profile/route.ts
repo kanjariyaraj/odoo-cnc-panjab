@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-middleware';
 import connectDB from '@/lib/mongodb';
 import { User } from '@/models/User';
-import { Mechanic } from '@/models/Mechanic';
 
 // Get current user profile
 export const GET = requireUser(async (req) => {
@@ -17,16 +16,8 @@ export const GET = requireUser(async (req) => {
       );
     }
 
-    // If user is a mechanic, include mechanic data
-    let userData = user.toJSON();
-    if (user.role === 'mechanic') {
-      const mechanic = await Mechanic.findOne({ userId: user._id });
-      if (mechanic) {
-        userData = { ...userData, mechanicProfile: mechanic.toJSON() };
-      }
-    }
-
-    return NextResponse.json({ user: userData });
+    // Return user data (mechanic profile is now part of User model)
+    return NextResponse.json({ user: user.toJSON() });
   } catch (error) {
     console.error('Get user error:', error);
     return NextResponse.json(
@@ -42,7 +33,7 @@ export const PUT = requireUser(async (req) => {
     await connectDB();
 
     const body = await req.json();
-    const { name, phone, profile, mechanicData } = body;
+    const { name, phone, profile } = body;
 
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -59,15 +50,6 @@ export const PUT = requireUser(async (req) => {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
-      );
-    }
-
-    // Update mechanic profile if provided and user is a mechanic
-    if (user.role === 'mechanic' && mechanicData) {
-      await Mechanic.findOneAndUpdate(
-        { userId: user._id },
-        mechanicData,
-        { new: true, runValidators: true }
       );
     }
 

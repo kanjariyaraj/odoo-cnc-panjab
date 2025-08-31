@@ -3,7 +3,6 @@ import { requireUser } from '@/lib/auth-middleware';
 import connectDB from '@/lib/mongodb';
 import { ServiceRequest } from '@/models/ServiceRequest';
 import { User } from '@/models/User';
-import { Mechanic } from '@/models/Mechanic';
 
 // Get service requests
 export const GET = requireUser(async (req) => {
@@ -22,15 +21,16 @@ export const GET = requireUser(async (req) => {
     if (req.user!.role === 'user') {
       query.userId = req.user!.id;
     } else if (req.user!.role === 'mechanic') {
-      // Mechanics see: assigned to them, pending requests, or in-progress requests they're handling
+      // Mechanics only see requests assigned specifically to them
+      query.mechanicId = req.user!.id;
+    } else if (req.user!.role === 'admin') {
+      // Admins see: requests claimed by their shop, or pending requests
       query.$or = [
-        { mechanicId: req.user!.id }, // Tasks assigned to this mechanic
-        { status: 'pending' }, // Available tasks
-        { status: 'assigned', mechanicId: { $exists: false } }, // Unassigned tasks
+        { adminId: req.user!.id }, // Tasks claimed by their shop
+        { status: 'pending' }, // Available tasks to claim
       ];
-      console.log('Mechanic query filter:', JSON.stringify(query, null, 2));
     }
-    // Admin can see all requests (no additional filter)
+    // Super admin can see all requests (no additional filter)
 
     // Filter by status if provided
     if (status && status !== 'all') {
@@ -44,10 +44,13 @@ export const GET = requireUser(async (req) => {
       .skip(skip)
       .limit(limit);
 
+    // Filter out requests where userId population failed (user was deleted)
+    const validRequests = requests.filter(request => request.userId != null);
+
     const total = await ServiceRequest.countDocuments(query);
 
     return NextResponse.json({
-      requests,
+      requests: validRequests,
       pagination: {
         page,
         limit,

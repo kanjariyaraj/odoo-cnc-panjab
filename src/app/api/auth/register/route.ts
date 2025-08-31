@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { User } from '@/models/User';
-import { Mechanic } from '@/models/Mechanic';
 import { validateRole } from '@/lib/auth-middleware';
 
 export async function POST(req: NextRequest) {
@@ -9,7 +8,16 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
-    const { email, password, name, phone, role = 'user', mechanicData } = body;
+    const { email, password, name, phone, role = 'user' } = body;
+
+    // Only allow user and admin registration via public signup
+    // Mechanics must be created by admins through employee management
+    if (role === 'mechanic') {
+      return NextResponse.json(
+        { error: 'Mechanic accounts can only be created by shop owners. Please contact a shop owner to create your account.' },
+        { status: 403 }
+      );
+    }
 
     // Validation
     if (!email || !password || !name) {
@@ -43,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create user
-    const userData = {
+    const userData: any = {
       email: email.toLowerCase(),
       password,
       name,
@@ -52,17 +60,20 @@ export async function POST(req: NextRequest) {
       isActive: true,
     };
 
+    // For admin users, require shop name
+    if (role === 'admin') {
+      const { shopName } = body;
+      if (!shopName || !shopName.trim()) {
+        return NextResponse.json(
+          { error: 'Shop name is required for admin accounts' },
+          { status: 400 }
+        );
+      }
+      userData.shopName = shopName.trim();
+    }
+
     const user = new User(userData);
     await user.save();
-
-    // If role is mechanic, create mechanic profile
-    if (role === 'mechanic' && mechanicData) {
-      const mechanic = new Mechanic({
-        userId: user._id,
-        ...mechanicData,
-      });
-      await mechanic.save();
-    }
 
     // Return user without password
     const { password: _, ...userResponse } = user.toJSON();

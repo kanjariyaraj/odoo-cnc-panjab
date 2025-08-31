@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserDashboard } from "@/components/dashboards/dynamic-user-dashboard";
 import { DynamicMechanicDashboard } from "@/components/dashboards/dynamic-mechanic-dashboard";
+import { DynamicAdminDashboard } from "@/components/dashboards/dynamic-admin-dashboard";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -34,8 +35,7 @@ export default function DashboardPage() {
     case "mechanic":
       return <DynamicMechanicDashboard />;
     case "admin":
-      // TODO: Create AdminDashboard component
-      return <UserDashboard />;
+      return <DynamicAdminDashboard />;
     case "user":
     default:
       return <UserDashboard />;

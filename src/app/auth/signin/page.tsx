@@ -199,16 +199,6 @@ export default function SignInPage() {
                   </Link>
                 </p>
               </div>
-
-              {/* Demo Accounts */}
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Demo Accounts:</h4>
-                <div className="text-xs text-blue-600 space-y-1">
-                  <div>User: user@roadguard.com / password123</div>
-                  <div>Mechanic: mechanic@roadguard.com / password123</div>
-                  <div>Admin: admin@roadguard.com / password123</div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </motion.div>

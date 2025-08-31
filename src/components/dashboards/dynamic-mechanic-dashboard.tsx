@@ -96,21 +96,6 @@ export function DynamicMechanicDashboard() {
   const completedRequests = requests.filter(r => r.status === 'completed');
   const totalEarnings = completedRequests.reduce((sum, r) => sum + r.pricing.total, 0);
 
-  const handleAcceptTask = async (requestId: string) => {
-    try {
-      const result = await mutate(`/api/service-requests/${requestId}`, {
-        method: 'PATCH',
-        body: { action: 'accept' }
-      });
-      if (result) {
-        refetch();
-      }
-    } catch (error) {
-      console.error('Error accepting task:', error);
-      alert(`Failed to accept task: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
-
   const handleStartTask = async (requestId: string) => {
     try {
       const result = await mutate(`/api/service-requests/${requestId}`, {
@@ -338,7 +323,7 @@ export function DynamicMechanicDashboard() {
                           <div className="grid md:grid-cols-2 gap-4 text-sm mb-4">
                             <div className="flex items-center space-x-2 text-gray-600">
                               <User className="w-4 h-4" />
-                              <span>{request.userId.name}</span>
+                              <span>{request.userId?.name || 'Unknown User'}</span>
                             </div>
                             <div className="flex items-center space-x-2 text-gray-600">
                               <Clock className="w-4 h-4" />
@@ -360,22 +345,6 @@ export function DynamicMechanicDashboard() {
                           </div>
 
                           <div className="flex flex-wrap gap-2">
-                            {request.status === "pending" && (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleAcceptTask(request._id)}
-                                  className="bg-blue-600 hover:bg-blue-700"
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Accept Task
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  <Navigation className="w-4 h-4 mr-2" />
-                                  Get Directions
-                                </Button>
-                              </>
-                            )}
                             {request.status === "assigned" && (
                               <>
                                 <Button 

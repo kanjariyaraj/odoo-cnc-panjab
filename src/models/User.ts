@@ -9,12 +9,18 @@ export interface IUser extends mongoose.Document {
   phone?: string;
   role: 'user' | 'mechanic' | 'admin';
   isActive: boolean;
+  shopId?: mongoose.Types.ObjectId; // For mechanics - which shop they belong to
+  shopName?: string; // For admins - their shop name
   profile: {
     avatar?: string;
     address?: string;
     city?: string;
     state?: string;
     zipCode?: string;
+    specialties?: string[]; // For mechanics
+    rating?: number; // For mechanics
+    completedJobs?: number; // For mechanics
+    yearsExperience?: number; // For mechanics
   };
   createdAt: Date;
   updatedAt: Date;
@@ -52,12 +58,25 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  shopId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // References the admin user who owns the shop
+    required: function(this: IUser) { return this.role === 'mechanic'; }
+  },
+  shopName: {
+    type: String,
+    required: function(this: IUser) { return this.role === 'admin'; }
+  },
   profile: {
     avatar: String,
     address: String,
     city: String,
     state: String,
     zipCode: String,
+    specialties: [String], // For mechanics
+    rating: { type: Number, default: 0 }, // For mechanics
+    completedJobs: { type: Number, default: 0 }, // For mechanics
+    yearsExperience: { type: Number, default: 0 }, // For mechanics
   },
 }, {
   timestamps: true,

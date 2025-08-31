@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-middleware';
 import connectDB from '@/lib/mongodb';
 import { User } from '@/models/User';
-import { Mechanic } from '@/models/Mechanic';
 import { ServiceRequest } from '@/models/ServiceRequest';
 
 // Get admin analytics

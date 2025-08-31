@@ -4,7 +4,8 @@ export interface IServiceRequest extends mongoose.Document {
   _id: string;
   requestId?: string;
   userId: mongoose.Types.ObjectId;
-  mechanicId?: mongoose.Types.ObjectId;
+  adminId?: mongoose.Types.ObjectId; // Shop owner who gets the request
+  mechanicId?: mongoose.Types.ObjectId; // Employee assigned by admin
   service: {
     type: 'battery' | 'tires' | 'towing' | 'lockout' | 'engine' | 'brakes' | 'electrical' | 'other';
     description: string;
@@ -23,7 +24,7 @@ export interface IServiceRequest extends mongoose.Document {
     address: string;
     landmark?: string;
   };
-  status: 'pending' | 'assigned' | 'in-progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'admin-review' | 'assigned' | 'in-progress' | 'completed' | 'cancelled';
   timeline: {
     requested: Date;
     assigned?: Date;
@@ -65,9 +66,13 @@ const serviceRequestSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  adminId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Shop owner who gets the request
+  },
   mechanicId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'User', // Employee assigned by admin
   },
   service: {
     type: {
@@ -100,7 +105,7 @@ const serviceRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'assigned', 'in-progress', 'completed', 'cancelled'],
+    enum: ['pending', 'admin-review', 'assigned', 'in-progress', 'completed', 'cancelled'],
     default: 'pending',
   },
   timeline: {
